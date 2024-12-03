@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin-top: 50px;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        #results {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Product Search</h1>
+        
+        <!-- Search Form -->
+        <form id="searchForm">
+            <div class="mb-3">
+                <label for="searchInput" class="form-label">Enter product name:</label>
+                <input type="text" id="searchInput" name="search_term" class="form-control" placeholder="Enter product name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <!-- Results Table -->
+        <div id="results"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#searchForm').on('submit', function (e) {
+                e.preventDefault(); // Prevent page reload
+
+                const searchTerm = $('#searchInput').val();
+                if (!searchTerm) {
+                    alert("Please enter a product name.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/search', // This should match the Flask route
+                    method: 'POST',
+                    contentType: 'application/x-www-form-urlencoded',
+                    data: { search_term: searchTerm }, // Send search term as form data
+                    success: function (data) {
+                        let html = '<h2>Search Results</h2><div class="table-responsive"><table class="table table-bordered">';
+                        html += '<thead><tr><th>Website</th><th>Title</th><th>Price</th><th>Offer Price</th><th>Rating</th><th>Reviews</th><th>Link</th></tr></thead><tbody>';
+
+                        data.forEach(item => {
+                            if (item.Error) {
+                                html += `<tr><td>${item.Website}</td><td colspan="5">${item.Error}</td></tr>`;
+                            } else {
+                                html += `<tr>
+                                    <td>${item.Website}</td>
+                                    <td>${item.Title}</td>
+                                    <td>${item.Price}</td>
+                                    <td>${item['Offer Price']}</td>
+                                    <td>${item.Rating}</td>
+                                    <td>${item['Reviews Count'] || 'No reviews'}</td>
+                                    <td><a href="${item['Product Link']}" target="_blank">View</a></td>
+                                </tr>`;
+                            }
+                        });
+
+                        html += '</tbody></table></div>';
+                        $('#results').html(html);
+                    },
+                    error: function () {
+                        $('#results').html('<p class="text-danger">Error fetching results. Please try again later.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
